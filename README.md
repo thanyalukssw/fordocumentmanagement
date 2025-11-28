@@ -248,11 +248,35 @@
         </div>
     </div>
 
+    <!-- Status Note Modal -->
+    <div id="statusNoteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Missing Information Note</h3>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Please specify what information is missing:</label>
+                    <textarea id="statusNoteText" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="e.g., Need to attach invoice copy, Missing signature, Incomplete form..."></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button onclick="hideStatusNoteModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button onclick="saveStatusWithNote()" class="flex-1 px-4 py-2 bg-gradient-to-r from-orange-600 to-red-500 text-white rounded-lg hover:from-orange-700 hover:to-red-600 transition shadow-md">
+                        Save Note
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global state
         let currentUser = null;
         let files = [];
         let selectedFile = null;
+        let currentFileIdForNote = null;
 
         // Status configuration
         const statusConfig = {
@@ -419,15 +443,50 @@
             }
         }
 
+        // Handle status change
+        function handleStatusChange(fileId, newStatus) {
+            if (newStatus === 'missing') {
+                // Show note modal for missing info
+                currentFileIdForNote = fileId;
+                document.getElementById('statusNoteModal').classList.remove('hidden');
+                document.getElementById('statusNoteText').value = '';
+            } else {
+                // Update status directly
+                updateFileStatus(fileId, newStatus, null);
+            }
+        }
+
+        // Hide status note modal
+        function hideStatusNoteModal() {
+            document.getElementById('statusNoteModal').classList.add('hidden');
+            currentFileIdForNote = null;
+            renderFiles(); // Reset select if cancelled
+        }
+
+        // Save status with note
+        function saveStatusWithNote() {
+            const note = document.getElementById('statusNoteText').value.trim();
+            if (!note) {
+                alert('Please enter a note explaining what information is missing');
+                return;
+            }
+            updateFileStatus(currentFileIdForNote, 'missing', note);
+            hideStatusNoteModal();
+        }
+
         // Update file status
-        function updateFileStatus(fileId, newStatus) {
+        function updateFileStatus(fileId, newStatus, note) {
             const fileIndex = files.findIndex(f => f.id === fileId);
             if (fileIndex !== -1) {
                 files[fileIndex].status = newStatus;
+                if (note !== null) {
+                    files[fileIndex].statusNote = note;
+                }
                 files[fileIndex].statusHistory.push({
                     status: newStatus,
                     timestamp: new Date().toISOString(),
-                    updatedBy: currentUser.username
+                    updatedBy: currentUser.username,
+                    note: note || undefined
                 });
                 saveFiles();
             }
@@ -487,7 +546,7 @@
                 const status = statusConfig[file.status];
                 const statusSelect = currentUser?.isAdmin ? `
                     <td class="px-4 py-3">
-                        <select onchange="updateFileStatus(${file.id}, this.value)" class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <select onchange="handleStatusChange(${file.id}, this.value)" class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500">
                             ${Object.entries(statusConfig).map(([key, val]) => 
                                 `<option value="${key}" ${file.status === key ? 'selected' : ''}>${val.label}</option>`
                             ).join('')}
@@ -508,6 +567,12 @@
                                         </svg>
                                         ${file.attachedFile.name}
                                     </button>
+                                ` : ''}
+                                ${file.statusNote ? `
+                                    <div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs">
+                                        <p class="font-semibold text-orange-800">Note:</p>
+                                        <p class="text-orange-700">${file.statusNote}</p>
+                                    </div>
                                 ` : ''}
                             </div>
                         </td>
