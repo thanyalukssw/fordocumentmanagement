@@ -38,6 +38,28 @@
                     <label for="loginIsAdmin" class="ml-2 text-sm text-gray-700">Login as Administrator</label>
                 </div>
 
+                <div id="adminDepartmentSection" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Department *</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="adminDepartment" value="Academic Affairs Department" class="w-4 h-4 text-green-600 focus:ring-green-500">
+                            <span class="ml-3 text-sm text-gray-900">Academic Affairs Department</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="adminDepartment" value="HR and Student Affairs Department" class="w-4 h-4 text-green-600 focus:ring-green-500">
+                            <span class="ml-3 text-sm text-gray-900">HR and Student Affairs Department</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="adminDepartment" value="General Administration Department" class="w-4 h-4 text-green-600 focus:ring-green-500">
+                            <span class="ml-3 text-sm text-gray-900">General Administration Department</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="adminDepartment" value="Budgeting and Finance Department" class="w-4 h-4 text-green-600 focus:ring-green-500">
+                            <span class="ml-3 text-sm text-gray-900">Budgeting and Finance Department</span>
+                        </label>
+                    </div>
+                </div>
+
                 <button onclick="handleLogin()" class="w-full py-3 bg-gradient-to-r from-green-600 to-yellow-500 text-white rounded-lg hover:from-green-700 hover:to-yellow-600 transition shadow-md font-medium">
                     Sign In
                 </button>
@@ -166,6 +188,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
                         Upload File
+                    </button>
+
+                    <button onclick="refreshData()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh
                     </button>
                 </div>
             </div>
@@ -353,6 +382,24 @@
         </div>
     </div>
 
+    <!-- Success Modal -->
+    <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                    <svg class="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">สำเร็จ!</h3>
+                <p class="text-sm text-gray-600 mb-4" id="successMessage">อัพโหลดเอกสารเรียบร้อยแล้ว</p>
+                <button onclick="hideSuccessModal()" class="px-6 py-2 bg-gradient-to-r from-green-600 to-yellow-500 text-white rounded-lg hover:from-green-700 hover:to-yellow-600 transition shadow-md">
+                    ตรวจสอบ
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global state
         let currentUser = null;
@@ -394,6 +441,16 @@
         // Initialize
         loadFiles();
 
+        // Toggle admin department section
+        document.getElementById('loginIsAdmin').addEventListener('change', function() {
+            const adminSection = document.getElementById('adminDepartmentSection');
+            if (this.checked) {
+                adminSection.classList.remove('hidden');
+            } else {
+                adminSection.classList.add('hidden');
+            }
+        });
+
         // Load files from localStorage
         function loadFiles() {
             const stored = localStorage.getItem('ds_office_files');
@@ -413,28 +470,34 @@
             const password = document.getElementById('loginPassword').value;
             const isAdmin = document.getElementById('loginIsAdmin').checked;
 
-            if (username && password.length >= 4) {
-                // Get admin department if admin
-                let adminDepartment = null;
-                if (isAdmin) {
-                    adminDepartment = prompt('Enter your department:\n1. Academic Affairs Department\n2. HR and Student Affairs Department\n3. General Administration Department\n4. Budgeting and Finance Department');
-                }
-
-                currentUser = { username, isAdmin, department: adminDepartment };
-                document.getElementById('loginModal').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('currentUsername').textContent = username;
-                document.getElementById('currentUserRole').textContent = isAdmin ? `Administrator (${adminDepartment})` : 'User';
-                
-                if (isAdmin) {
-                    document.getElementById('actionsHeader').classList.remove('hidden');
-                }
-                
-                renderFiles();
-                updateStats();
-            } else {
+            if (!username || password.length < 4) {
                 alert('Please enter a valid username and password (min 4 characters)');
+                return;
             }
+
+            // Get admin department if admin
+            let adminDepartment = null;
+            if (isAdmin) {
+                const selectedDept = document.querySelector('input[name="adminDepartment"]:checked');
+                if (!selectedDept) {
+                    alert('Please select a department');
+                    return;
+                }
+                adminDepartment = selectedDept.value;
+            }
+
+            currentUser = { username, isAdmin, department: adminDepartment };
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('currentUsername').textContent = username;
+            document.getElementById('currentUserRole').textContent = isAdmin ? `Administrator (${adminDepartment})` : 'User';
+            
+            if (isAdmin) {
+                document.getElementById('actionsHeader').classList.remove('hidden');
+            }
+            
+            renderFiles();
+            updateStats();
         }
 
         // Logout handler
@@ -571,6 +634,26 @@
             files.push(newFile);
             saveFiles();
             hideUploadModal();
+            showSuccessModal('อัพโหลดเอกสารเรียบร้อยแล้ว');
+        }
+
+        // Show success modal
+        function showSuccessModal(message) {
+            document.getElementById('successMessage').textContent = message;
+            document.getElementById('successModal').classList.remove('hidden');
+        }
+
+        // Hide success modal
+        function hideSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        // Refresh data
+        function refreshData() {
+            loadFiles();
+            renderFiles();
+            updateStats();
+            showSuccessModal('รีเฟรชข้อมูลเรียบร้อยแล้ว');
         }
 
         // Download attached file
@@ -735,6 +818,7 @@
 
                 saveFiles();
                 hideResubmitModal();
+                showSuccessModal('ส่งเอกสารใหม่เรียบร้อยแล้ว');
             }
         }
 
