@@ -151,7 +151,7 @@
 
                     <select id="typeFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
                         <option value="all">All Types</option>
-                        <option value="Billing">Billing</option>
+                        <option value="Maintenance">Maintenance</option>
                         <option value="Paper">Paper</option>
                         <option value="Approval">Approval</option>
                         <option value="Leave Request">Leave Request</option>
@@ -208,7 +208,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">File Type *</label>
                     <select id="uploadFileType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                        <option value="Billing">Billing</option>
+                        <option value="Maintenance">Maintenance</option>
                         <option value="Paper">Paper</option>
                         <option value="Approval">Approval</option>
                         <option value="Leave Request">Leave Request</option>
@@ -291,7 +291,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">File Type *</label>
                     <select id="resubmitFileType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
-                        <option value="Billing">Billing</option>
+                        <option value="Maintenance">Maintenance</option>
                         <option value="Paper">Paper</option>
                         <option value="Approval">Approval</option>
                         <option value="Leave Request">Leave Request</option>
