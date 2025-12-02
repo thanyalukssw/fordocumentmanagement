@@ -959,7 +959,8 @@
             }
 
             // Filter by admin department (admins only see files from their department)
-            if (currentUser && currentUser.isAdmin && currentUser.department) {
+            // Only apply if NOT using department filter dropdown
+            if (currentUser && currentUser.isAdmin && currentUser.department && departmentFilter === 'all') {
                 filtered = filtered.filter(f => f.department === currentUser.department);
             }
 
@@ -991,7 +992,13 @@
             const tbody = document.getElementById('filesTableBody');
             
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${currentUser?.isAdmin ? 8 : 7}" class="px-4 py-8 text-center text-gray-500">No files found</td></tr>`;
+                const noDataMessage = currentUser?.isAdmin 
+                    ? `<tr><td colspan="${currentUser?.isAdmin ? 8 : 7}" class="px-4 py-8 text-center">
+                        <p class="text-gray-500 mb-2">ไม่พบเอกสารในหน่วยงาน ${currentUser.department}</p>
+                        <p class="text-sm text-gray-400">รอผู้ใช้อัพโหลดเอกสารเข้ามา</p>
+                       </td></tr>`
+                    : `<tr><td colspan="${currentUser?.isAdmin ? 8 : 7}" class="px-4 py-8 text-center text-gray-500">No files found</td></tr>`;
+                tbody.innerHTML = noDataMessage;
                 return;
             }
 
